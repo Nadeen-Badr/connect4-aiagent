@@ -162,3 +162,92 @@ def getValidLocation(board):
         if isValidLocation(board, col):
             valid_locations.append(col)
     return valid_locations
+
+
+
+
+def drawBoard(board):
+    screen = pygame.display.set_mode((700, 700))
+    for c in range(7):
+        for r in range(6):
+            pygame.draw.rect(screen, (0, 0, 255), (c * 100, r * 100 + 100, 100, 100))
+            pygame.draw.circle(screen, (0, 0, 0), (int(c * 100 + 100 / 2), int(r * 100 + 100 + 100 / 2)), radius)
+    for c in range(7):
+        for r in range(6):
+            if board[r][c] == 1:
+                pygame.draw.circle(screen, (255, 0, 0), (int(c * 100 + 100 / 2), height - int(r * 100 + 100 / 2)),radius)
+            elif board[r][c] == 2:
+                pygame.draw.circle(screen, (255, 255, 0), (int(c * 100 + 100 / 2), height - int(r * 100 + 100 / 2)), radius)
+    pygame.display.update()
+
+def computer_move_random(board):
+    available_columns = [col for col in range(7)]
+    column = random.choice(available_columns)
+    return column
+The_End = False
+
+
+def StartGame(optional,difficulty):
+    pygame.init()
+    screen = pygame.display.set_mode(size)
+    board = createBoard()
+    myfont = pygame.font.SysFont("monospace", 75)
+    drawBoard(board)
+    pygame.display.update()
+
+    global The_End, Flag
+    Flag=0 
+    while not The_End:
+        if Flag == 0:
+                    col = computer_move_random(board)
+                    if isValidLocation(board, col):
+                        row = AvailabeRow(board, col)
+                        put_coin(board, row, col, 1)
+
+                        if Is_Winning(board, 1):
+                            label = myfont.render("Player 1 wins!!", 1, (255, 0, 0))
+                            screen.blit(label, (40, 10))
+                            The_End = True
+
+                        Flag += 1
+                        Flag = Flag % 2
+
+                        printBoard(board)
+                        drawBoard(board)
+
+                        
+
+        # Ask for Player 2 Input!!
+        if Flag == 1 and not The_End:
+            if optional=="Min":
+                if(difficulty=="Easy"):
+                    col, minimax_score = MinMax(board, 3, True)
+                elif(difficulty=="Medium"):
+                    col, minimax_score = MinMax(board, 4, True)
+                else :
+                    col, minimax_score = MinMax(board, 5, True)
+            else:
+                if(difficulty=="Easy"):
+                    col, minimax_score = Alpha(board, 3, -math.inf, math.inf, True)
+                elif(difficulty=="Medium"):
+                    col, minimax_score = Alpha(board, 4, -math.inf, math.inf, True)
+                else :
+                    col, minimax_score = Alpha(board, 5, -math.inf, math.inf, True)
+            if isValidLocation(board, col):
+                row = AvailabeRow(board, col)
+                put_coin(board, row, col, 2)
+
+                if Is_Winning(board, 2):
+                    label = myfont.render("Player 2 wins!!", 1, (255, 255, 0))
+                    screen.blit(label, (40, 10))
+                    The_End = True
+
+                printBoard(board)
+                drawBoard(board)
+
+                Flag += 1
+                Flag = Flag % 2
+
+        if The_End:
+            pygame.time.wait(5000)
+import time
