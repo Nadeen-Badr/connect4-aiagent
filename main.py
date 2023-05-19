@@ -250,4 +250,88 @@ def StartGame(optional,difficulty):
 
         if The_End:
             pygame.time.wait(5000)
-import time
+import time
+
+# Function to measure the execution time and explore nodes using Minimax algorithm
+def measure_minimax_performance(board, depth):
+    start_time = time.time()
+    MinMax(board, depth, True)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    return execution_time
+# Function to measure the execution time and explore nodes using Alpha-Beta Pruning algorithm
+def measure_alphabeta_performance(board, depth):
+    start_time = time.time()
+    Alpha(board, depth, -math.inf, math.inf, True)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    return execution_time
+
+# Create a table to compare performance
+def compare_performance():
+    board = createBoard()
+    depths = [3, 4, 5]  # Different depths to test
+
+    print("Depth\tMinimax Time\tAlpha-Beta Time\tAlpha-Beta Nodes")
+    for depth in depths:
+        minimax_time= measure_minimax_performance(board, depth)
+        alphabeta_time= measure_alphabeta_performance(board, depth)
+        print(f"{depth}\t{minimax_time:.6f}\t{alphabeta_time:.6f}")
+
+# Run the comparison
+compare_performance()
+
+#Gui of start Screen
+def algorithm_screen():
+    def choose_option(option):
+        start_screen.destroy()  # Close the start screen window
+        difficulty_screen(option)
+
+    start_screen = Tk()
+    start_screen.title("Start Screen")
+    start_screen.geometry("700x400")  # Set the window size to 400x300 pixels
+    start_screen.configure(bg="#b39ddb") 
+
+    title_label = Label(start_screen, text="Choose an option:", font=("Arial", 16))
+    title_label.place(relx=0.5, rely=0.2, anchor="center")
+    title_label.configure(bg="#b39ddb")
+
+    min_button = Button(start_screen, text="Min Max Algorithm", font=("Arial", 12), width=20, height=2, bg="#7986cb", fg="#FFFFFF",
+                        command=lambda: choose_option("Min"))
+    min_button.place(relx=0.5, rely=0.4, anchor="center")  # Position the button in the center
+
+    max_button = Button(start_screen, text="Alpha Beta Algorithm", font=("Arial", 12), width=20, height=2, bg="#7986cb", fg="#FFFFFF",
+                        command=lambda: choose_option("Alpha"))
+    max_button.place(relx=0.5, rely=0.6, anchor="center")  # Position the button in the center
+
+    start_screen.mainloop()
+
+#Gui to choose level
+def difficulty_screen(option):
+    def choose_difficulty(difficulty):
+        print(f"You selected: {option} and {difficulty}")
+        difficulty_screen.destroy()  # Close the difficulty selection screen
+        # Start the game with the selected option and difficulty
+        StartGame(option,difficulty)
+
+    difficulty_screen = Tk()
+    difficulty_screen.title("Difficulty Selection")
+    if option == "Min":
+        difficulty_screen.geometry("700x400")  # Set the window size for "Min" option
+        difficulty_screen.configure(bg="#b39ddb") 
+        
+    elif option == "Max":
+        difficulty_screen.geometry("700x400")
+        difficulty_screen.configure(bg="#b39ddb") 
+
+    easy_button = Button(difficulty_screen, text="Easy", font=("Arial", 12), width=15, height=2,bg="#7986cb", fg="#FFFFFF", command=lambda: choose_difficulty("Easy"))
+    easy_button.place(relx=0.5, rely=0.4, anchor="center")
+
+    medium_button = Button(difficulty_screen, text="Medium", font=("Arial", 12), width=15, height=2,bg="#7986cb", fg="#FFFFFF",command=lambda: choose_difficulty("Medium"))
+    medium_button.place(relx=0.5, rely=0.6, anchor="center")
+
+    hard_button = Button(difficulty_screen, text="Hard", font=("Arial", 12), width=15, height=2,bg="#7986cb", fg="#FFFFFF",command=lambda: choose_difficulty("Hard"))
+    hard_button.place(relx=0.5, rely=0.8, anchor="center")
+
+
+algorithm_screen()
