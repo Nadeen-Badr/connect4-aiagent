@@ -1,61 +1,69 @@
+import math
+import random
+import sys
 from tkinter import Tk, Button, Label
+import numpy as np
 import pygame
 
 
-#Gui of start Screen
-def algorithm_screen():
-    def choose_option(option):
-        start_screen.destroy()  # Close the start screen window
-        difficulty_screen(option)
-
-    start_screen = Tk()
-    start_screen.title("Start Screen")
-    start_screen.geometry("700x400")  # Set the window size to 400x300 pixels
-    start_screen.configure(bg="#b39ddb") 
-
-    title_label = Label(start_screen, text="Choose an option:", font=("Arial", 16))
-    title_label.place(relx=0.5, rely=0.2, anchor="center")
-    title_label.configure(bg="#b39ddb")
-
-    min_button = Button(start_screen, text="Min Max Algorithm", font=("Arial", 12), width=20, height=2, bg="#7986cb", fg="#FFFFFF",
-                        command=lambda: choose_option("Min"))
-    min_button.place(relx=0.5, rely=0.4, anchor="center")  # Position the button in the center
-
-    max_button = Button(start_screen, text="Alpha Beta Algorithm", font=("Arial", 12), width=20, height=2, bg="#7986cb", fg="#FFFFFF",
-                        command=lambda: choose_option("Alpha"))
-    max_button.place(relx=0.5, rely=0.6, anchor="center")  # Position the button in the center
-
-    start_screen.mainloop()
-
-#Gui to choose level
-def difficulty_screen(option):
-    def choose_difficulty(difficulty):
-        print(f"You selected: {option} and {difficulty}")
-        difficulty_screen.destroy()  # Close the difficulty selection screen
-        # Start the game with the selected option and difficulty
-        StartGame(option,difficulty)
-
-    difficulty_screen = Tk()
-    difficulty_screen.title("Difficulty Selection")
-    if option == "Min":
-        difficulty_screen.geometry("700x400")  # Set the window size for "Min" option
-        difficulty_screen.configure(bg="#b39ddb") 
-        
-    elif option == "Max":
-        difficulty_screen.geometry("700x400")
-        difficulty_screen.configure(bg="#b39ddb") 
-
-    easy_button = Button(difficulty_screen, text="Easy", font=("Arial", 12), width=15, height=2,bg="#7986cb", fg="#FFFFFF", command=lambda: choose_difficulty("Easy"))
-    easy_button.place(relx=0.5, rely=0.4, anchor="center")
-
-    medium_button = Button(difficulty_screen, text="Medium", font=("Arial", 12), width=15, height=2,bg="#7986cb", fg="#FFFFFF",command=lambda: choose_difficulty("Medium"))
-    medium_button.place(relx=0.5, rely=0.6, anchor="center")
-
-    hard_button = Button(difficulty_screen, text="Hard", font=("Arial", 12), width=15, height=2,bg="#7986cb", fg="#FFFFFF",command=lambda: choose_difficulty("Hard"))
-    hard_button.place(relx=0.5, rely=0.8, anchor="center")
+board = np.zeros((6, 7))
+The_End = False
+width = 7 * 100
+height = (6 + 1) * 100
+size = (width, height)
+radius = int(100 / 2 - 5)
 
 
-algorithm_screen()
+def createBoard():
+    global board
+    return board
+
+def put_coin(board, row, col, piece):
+    board[row][col] = piece
+
+def isValidLocation(board, col):
+    return board[6 - 1][col] == 0
+
+def AvailabeRow(board, col):
+    for r in range(6):
+        if board[r][col] == 0:
+            return r
+
+def printBoard(board):
+    print(np.flip(board, 0))
+
+def Is_Winning(board, piece):
+    # Check horizontal locations for win!!
+    for c in range(7 - 3):
+        for r in range(6):
+            if board[r][c] == piece and board[r][c + 1] == piece and board[r][c + 2] == piece and board[r][
+                c + 3] == piece:
+                return True
+
+    # Check vertical locations for win!!
+    for c in range(7):
+        for r in range(6 - 3):
+            if board[r][c] == piece and board[r + 1][c] == piece and board[r + 2][c] == piece and board[r + 3][
+                c] == piece:
+                return True
+
+    # Check positively sloped diaganoll!!
+    for c in range(7 - 3):
+        for r in range(6 - 3):
+            if board[r][c] == piece and board[r + 1][c + 1] == piece and board[r + 2][c + 2] == piece and board[r + 3][
+                c + 3] == piece:
+                return True
+
+    # Check negatively sloped diaganol!!
+    for c in range(7 - 3):
+        for r in range(3, 6):
+            if board[r][c] == piece and board[r - 1][c + 1] == piece and board[r - 2][c + 2] == piece and board[r - 3][
+                c + 3] == piece:
+                return True
+
+
+def isTerminalNode(board):
+    return Is_Winning(board, 1) or Is_Winning(board, 2) or len(getValidLocation(board)) == 0
 
 def MinMax(board, depth, maximizingPlayer):
     valid_locations = getValidLocation(board)
@@ -72,4 +80,85 @@ def MinMax(board, depth, maximizingPlayer):
         # Depth is zero!!
         else:
             return (None, 0)
-    
+    if maximizingPlayer:
+        value = -math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = AvailabeRow(board, col)
+            b_copy = board.copy()
+            put_coin(b_copy, row, col, 2)
+            new_value = MinMax(b_copy, depth - 1, False)[1]
+            if new_value > value:
+                value = new_value
+                column = col
+            
+        return column, value
+
+    else:  # Minimizing player
+        value = math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = AvailabeRow(board, col)
+            b_copy = board.copy()
+            put_coin(b_copy, row, col, 1)
+            new_value = MinMax(b_copy, depth - 1, True)[1]
+            if new_value < value:
+                value = new_value
+                column = col
+        return column, value
+
+
+def Alpha(board, depth, alpha, beta, maximizingPlayer):
+    valid_locations = getValidLocation(board)
+    is_terminal = isTerminalNode(board)
+    if depth == 0 or is_terminal:
+        if is_terminal:
+            if Is_Winning(board, 2):
+                return (None, 1)
+            elif Is_Winning(board, 1):
+                return (None, -1)
+            # Game is over, no more valid moves!!
+            else:
+                return (None, 0)
+        # Depth is zero!!
+        else:
+            return (None, 0)
+    if maximizingPlayer:
+        value = -math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = AvailabeRow(board, col)
+            b_copy = board.copy()
+            put_coin(b_copy, row, col, 2)
+            new_score = Alpha(b_copy, depth - 1, alpha, beta, False)[1]
+            if new_score > value:
+                value = new_score
+                column = col
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break
+        return column, value
+
+    else:  # Minimizing player
+        value = math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = AvailabeRow(board, col)
+            b_copy = board.copy()
+            put_coin(b_copy, row, col, 1)
+            new_score = Alpha(b_copy, depth - 1, alpha, beta, True)[1]
+            if new_score < value:
+                value = new_score
+                column = col
+            beta = min(beta, value)
+            if alpha >= beta:
+                break
+        return column, value
+
+
+def getValidLocation(board):
+    valid_locations = []
+    for col in range(7):
+        if isValidLocation(board, col):
+            valid_locations.append(col)
+    return valid_locations
